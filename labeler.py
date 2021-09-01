@@ -1,9 +1,12 @@
 import os
-
 import cv2
 import time
 import math
 import PySimpleGUI as sg
+
+# calculations for eye censoring
+from numpy import ones, vstack
+from numpy.linalg import lstsq
 
 
 def calc_angle(a, b, c):
@@ -42,16 +45,6 @@ COCO Output Format:
 '''
 
 '''
-MPI Output Format:
- * Head – 0, Neck – 1, Right Shoulder – 2, Right Elbow – 3, Right Wrist – 4, Left Shoulder – 5, Left Elbow – 6, 
- * Left Wrist – 7, Right Hip – 8, Right Knee – 9, Right Ankle – 10, Left Hip – 11, Left Knee – 12, Left Ankle – 13,
- * Chest – 14, Background – 15
-'''
-
-# COCO model slower by 1.5 than MPI
-
-
-'''
 * lsh = left shoulder
 * rsh = right shoulder
 * reye = right eye
@@ -66,6 +59,25 @@ REYE = 14
 LEYE = 15
 REAR = 16
 LEAR = 17
+
+
+def censor_eyes(frame, left_eye, right_eye):
+    print(left_eye, right_eye)
+
+    # calculate the slope intercept form of the line from the Left Eye to the Right eye
+    # meaning, finding the m and b, in y=mx+b
+
+    points = [left_eye, right_eye]
+    x_coords, y_coords = zip(*points)
+    A = vstack([x_coords, ones(len(x_coords))]).T
+    m, b = lstsq(A, y_coords, rcond=None)[0]
+    dist = math.dist(left_eye, right_eye)
+    enlarged_dist_wanted = dist/4
+    left_point = (int(left_eye[0] + enlarged_dist_wanted), int(m*(left_eye[0] + enlarged_dist_wanted) + b))
+    right_point = (int(right_eye[0] - enlarged_dist_wanted), int(m * (right_eye[0] - enlarged_dist_wanted) + b))
+
+    # Censor eyes
+    cv2.line(frame, left_point, right_point, (0, 0, 0), 30)
 
 
 def label_image(frame, need_to_show_frame=True):
@@ -132,6 +144,9 @@ def label_image(frame, need_to_show_frame=True):
         else:
             points.append(None)
 
+    # Censor the eyes
+    censor_eyes(frame, points[LEYE], points[REYE])
+
     # Draw Skeleton
     for pair in POSE_PAIRS:
         partA = pair[0]
@@ -185,9 +200,16 @@ def main():
     # init Windows Manager
     sg.theme("DarkBlue")
 
+    # Capture button logo
+    img_path = "img/camera.png"
+
+    capture_btn = sg.Button(button_color=sg.TRANSPARENT_BUTTON,
+                            image_filename=img_path, image_size=(50, 50), image_subsample=2,
+                            border_width=0, key="_capture_")
+
     # def webcam col
     colwebcam1_layout = [[sg.Text("Camera View", size=(60, 1), justification="center")],
-                         [sg.Image(filename="", key="cam1")], [sg.Button("Capture")]]
+                         [sg.Image(filename="", key="cam1")], [capture_btn]]
     colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
 
     colslayout = [colwebcam1]
@@ -196,7 +218,7 @@ def main():
 
     window = sg.Window("Labeler demo", layout,
                        no_titlebar=False, alpha_channel=1, grab_anywhere=False,
-                       return_keyboard_events=True, location=(100, 100), icon="camera.ico")
+                       return_keyboard_events=True, location=(100, 100), icon="img/camera.ico")
 
     while True:
         event, values = window.read(timeout=20)
@@ -212,7 +234,8 @@ def main():
         imgbytes = cv2.imencode(".png", frame)[1].tobytes()
         window["cam1"].update(data=imgbytes)
 
-        if event == "Capture":
+        # if the capture button was pressed
+        if event == "_capture_":
             label_image(frame, False)
 
     video_capture.release()
