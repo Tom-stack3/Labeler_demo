@@ -34,7 +34,6 @@ REAR = 16
 LEAR = 17
 
 
-
 def calc_angle(a, b, c):
     """
     :param a: a[x, y]
@@ -144,7 +143,7 @@ def censor_eyes(frame, left_eye, right_eye):
     cv2.circle(frame, bottom_left, 8, (0, 0, 255))
 
     # Censor eyes
-    cv2.fillConvexPoly(frame, array([upper_left, bottom_left, bottom_right, upper_right]), (0,0,0))
+    cv2.fillConvexPoly(frame, array([upper_left, bottom_left, bottom_right, upper_right]), (0, 0, 0))
 
 
 def label_image(net, frame, need_to_show_frame=True):
