@@ -8,6 +8,32 @@ import PySimpleGUI as sg
 from numpy import ones, vstack, array
 from numpy.linalg import lstsq
 
+CENSOR_EYES = True
+
+'''
+COCO Output Format:
+ * Nose – 0, Neck – 1, Right Shoulder – 2, Right Elbow – 3, Right Wrist – 4, Left Shoulder – 5, Left Elbow – 6, 
+ * Left Wrist – 7, Right Hip – 8, Right Knee – 9, Right Ankle – 10, Left Hip – 11, Left Knee – 12, LAnkle – 13,
+ * Right Eye – 14, Left Eye – 15, Right Ear – 16, Left Ear – 17, Background – 18
+'''
+
+'''
+* lsh = left shoulder
+* rsh = right shoulder
+* reye = right eye
+* leye = left eye
+'''
+
+NOSE = 0
+NECK = 1
+RSH = 2
+LSH = 5
+REYE = 14
+LEYE = 15
+REAR = 16
+LEAR = 17
+
+
 
 def calc_angle(a, b, c):
     """
@@ -35,30 +61,6 @@ def rescale_frame(frame, percent=80):
         dim = (width, height)
         resized = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
         return rescale_frame(resized)
-
-
-'''
-COCO Output Format:
- * Nose – 0, Neck – 1, Right Shoulder – 2, Right Elbow – 3, Right Wrist – 4, Left Shoulder – 5, Left Elbow – 6, 
- * Left Wrist – 7, Right Hip – 8, Right Knee – 9, Right Ankle – 10, Left Hip – 11, Left Knee – 12, LAnkle – 13,
- * Right Eye – 14, Left Eye – 15, Right Ear – 16, Left Ear – 17, Background – 18
-'''
-
-'''
-* lsh = left shoulder
-* rsh = right shoulder
-* reye = right eye
-* leye = left eye
-'''
-
-NOSE = 0
-NECK = 1
-RSH = 2
-LSH = 5
-REYE = 14
-LEYE = 15
-REAR = 16
-LEAR = 17
 
 
 def calc_m_and_b(point1, point2):
@@ -106,7 +108,6 @@ def censor_eyes(frame, left_eye, right_eye):
     :param right_eye: right eye (x,y)
     :return: None
     """
-    print(left_eye, right_eye)
 
     # calculate the slope intercept form of the line from the Left Eye to the Right eye
     # meaning, finding the m and b, in y=mx+b
@@ -203,8 +204,9 @@ def label_image(net, frame, need_to_show_frame=True):
         else:
             points.append(None)
 
-    # Censor the eyes
-    censor_eyes(frame, points[LEYE], points[REYE])
+    if CENSOR_EYES:
+        # Censor the eyes
+        censor_eyes(frame, points[LEYE], points[REYE])
 
     # Draw Skeleton
     for pair in POSE_PAIRS:
@@ -233,6 +235,7 @@ def label_image(net, frame, need_to_show_frame=True):
 
     save_img(frame)
 
+    print("Captured Image!")
     print("Total time taken : {:.3f}".format(time.time() - t))
 
     cv2.waitKey(0)
@@ -259,7 +262,7 @@ def main():
     camera_width = 1024  # 320 # 480 # 640 # 1024 # 1280
     camera_height = 780  # 240 # 320 # 480 # 780  # 960
     frameSize = (camera_width, camera_height)
-    video_capture = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     time.sleep(1.0)
 
     # init Windows Manager
