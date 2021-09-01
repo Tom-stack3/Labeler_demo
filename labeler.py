@@ -5,7 +5,7 @@ import math
 import PySimpleGUI as sg
 
 # calculations for eye censoring
-from numpy import ones, vstack
+from numpy import ones, vstack, array
 from numpy.linalg import lstsq
 
 
@@ -61,28 +61,92 @@ REAR = 16
 LEAR = 17
 
 
+def calc_m_and_b(point1, point2):
+    """
+    calculate the slope intercept form of the line from Point 1 to Point 2.
+    meaning, finding the m and b, in y=mx+b.
+    :param point1: point 1
+    :param point2: point 2
+    :return: m, b
+    """
+    points = [point1, point2]
+    x_coords, y_coords = zip(*points)
+    A = vstack([x_coords, ones(len(x_coords))]).T
+
+    return lstsq(A, y_coords, rcond=None)[0]
+
+
+def y_from_m_b_x(m, b, x):
+    """
+    get y from y=mx+b
+    :param m: slope (m)
+    :param b: b
+    :param x: x
+    :return: y from y=mx+b
+    """
+    return m * x + b
+
+
+def x_from_m_b_y(m, b, y):
+    """
+    get x from y=mx+b
+    :param m: slope (m)
+    :param b: b
+    :param y: y
+    :return: get x from y=mx+b
+    """
+    return (y - b) / m
+
+
 def censor_eyes(frame, left_eye, right_eye):
+    """
+    censor the eyes of the client
+    :param frame: frame to draw on
+    :param left_eye: left eye (x,y)
+    :param right_eye: right eye (x,y)
+    :return: None
+    """
     print(left_eye, right_eye)
 
     # calculate the slope intercept form of the line from the Left Eye to the Right eye
     # meaning, finding the m and b, in y=mx+b
 
-    points = [left_eye, right_eye]
-    x_coords, y_coords = zip(*points)
-    A = vstack([x_coords, ones(len(x_coords))]).T
-    m, b = lstsq(A, y_coords, rcond=None)[0]
+    m, b = calc_m_and_b(left_eye, right_eye)
     dist = math.dist(left_eye, right_eye)
-    enlarged_dist_wanted = dist/4
-    left_point = (int(left_eye[0] + enlarged_dist_wanted), int(m*(left_eye[0] + enlarged_dist_wanted) + b))
+    enlarged_dist_wanted = dist * 0.4
+    left_point = (int(left_eye[0] + enlarged_dist_wanted), int(m * (left_eye[0] + enlarged_dist_wanted) + b))
     right_point = (int(right_eye[0] - enlarged_dist_wanted), int(m * (right_eye[0] - enlarged_dist_wanted) + b))
 
+    # slope of the perpendicular line
+    per_slope = -1.0 / m
+    b_left = left_point[1] - per_slope * left_point[0]
+    b_right = right_point[1] - per_slope * right_point[0]
+    y_margin_wanted = dist / 3
+
+    bottom_right_y = left_point[1] + y_margin_wanted
+    bottom_right = (int(x_from_m_b_y(per_slope, b_left, bottom_right_y)), int(bottom_right_y))
+
+    upper_right_y = left_point[1] - y_margin_wanted
+    upper_right = (int(x_from_m_b_y(per_slope, b_left, upper_right_y)), int(upper_right_y))
+
+    upper_left_y = right_point[1] - y_margin_wanted
+    upper_left = (int(x_from_m_b_y(per_slope, b_right, upper_left_y)), int(upper_left_y))
+    # upper_left = (int((upper_left_y - b_right) / per_slope), int(upper_left_y))
+
+    bottom_left_y = right_point[1] + y_margin_wanted
+    bottom_left = (int(x_from_m_b_y(per_slope, b_right, bottom_left_y)), int(bottom_left_y))
+
+    cv2.circle(frame, upper_right, 8, (0, 0, 255))
+    cv2.circle(frame, bottom_right, 8, (0, 0, 255))
+
+    cv2.circle(frame, upper_left, 8, (0, 0, 255))
+    cv2.circle(frame, bottom_left, 8, (0, 0, 255))
+
     # Censor eyes
-    cv2.line(frame, left_point, right_point, (0, 0, 0), 30)
+    cv2.fillConvexPoly(frame, array([upper_left, bottom_left, bottom_right, upper_right]), (0,0,0))
 
 
-def label_image(frame, need_to_show_frame=True):
-    protoFile = "coco/pose_deploy_linevec.prototxt"
-    weightsFile = "coco/pose_iter_440000.caffemodel"
+def label_image(net, frame, need_to_show_frame=True):
     nPoints = 18
     POSE_PAIRS = [[NOSE, NECK], [NECK, RSH], [NECK, LSH], [NOSE, RSH], [NOSE, LSH], [RSH, LSH], [REYE, NOSE],
                   [NOSE, LEYE]]  # , [REAR, REYE], [LEYE, LEAR]]
@@ -98,16 +162,11 @@ def label_image(frame, need_to_show_frame=True):
     resized = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
     print('Resized Dimensions : ', resized.shape)
-
     frame = resized
 
     frameWidth = frame.shape[1]
     frameHeight = frame.shape[0]
     threshold = 0.1
-
-    net = cv2.dnn.readNetFromCaffe(protoFile, weightsFile)
-
-    net.setPreferableBackend(cv2.dnn.DNN_TARGET_CPU)
 
     t = time.time()
     # input image dimensions for the network
@@ -190,6 +249,12 @@ def save_img(frame):
 
 
 def main():
+    # Load the Model
+    protoFile = "coco/pose_deploy_linevec.prototxt"
+    weightsFile = "coco/pose_iter_440000.caffemodel"
+    net = cv2.dnn.readNetFromCaffe(protoFile, weightsFile)
+    net.setPreferableBackend(cv2.dnn.DNN_TARGET_CPU)
+
     # Camera Settings
     camera_width = 1024  # 320 # 480 # 640 # 1024 # 1280
     camera_height = 780  # 240 # 320 # 480 # 780  # 960
@@ -236,7 +301,7 @@ def main():
 
         # if the capture button was pressed
         if event == "_capture_":
-            label_image(frame, False)
+            label_image(net, frame, False)
 
     video_capture.release()
     cv2.destroyAllWindows()
