@@ -16,7 +16,7 @@ python labeler.py
 
 ## Output
 All the labeled images and a log file are saved locally in the `output` folder, which will be created automatically.
-In order to protect the user's privacy, the person's eyes detected in a captured image are censored, before the image is saved locally.
+In order to protect the user's privacy, the person's eyes detected in a captured image are **censored**, before the image is saved locally.
 
 An example for an image generated and saved locally by the script:
 
