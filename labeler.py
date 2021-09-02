@@ -13,7 +13,10 @@ RESIZE_FRAME = False
 
 # Camera Settings
 CAMERA_WIDTH = 640  # 320 # 480 # 640 # 1024 # 1280
-CAMERA_HEIGHT = 480 # 240 # 320 # 480 # 780  # 960
+CAMERA_HEIGHT = 480  # 240 # 320 # 480 # 780  # 960
+
+# Output Settings
+IMG_OUTPUT_EXTENSION = ".jpg"
 
 '''
 COCO Output Format:
@@ -168,7 +171,7 @@ def label_image(net, frame, need_to_show_frame=True):
                   [NOSE, LEYE]]  # , [REAR, REYE], [LEYE, LEAR]]
 
     print('Original Dimensions : ', frame.shape)
-    
+
     if RESIZE_FRAME:
         scale_percent = 60  # percent of original size
         width = int(frame.shape[1] * scale_percent / 100)
@@ -224,6 +227,9 @@ def label_image(net, frame, need_to_show_frame=True):
         # Censor the eyes
         censor_eyes(frame, points[LEYE], points[REYE])
 
+    # Save image without the points and lines detected drawn on.
+    img_name = save_img(frame, False)
+
     # Draw Skeleton
     for pair in POSE_PAIRS:
         partA = pair[0]
@@ -256,7 +262,7 @@ def label_image(net, frame, need_to_show_frame=True):
     if need_to_show_frame:
         cv2.imshow('Output-Skeleton', frame)
 
-    img_name = save_img(frame)
+    save_img(frame, True, img_name)
     keypoints, distances_and_angles = calc_data_for_log(points)
     save_to_log(img_name, keypoints, distances_and_angles)
 
@@ -310,28 +316,33 @@ def save_to_log(img_name, keypoints, distances_and_angles):
         f = open("output/log.csv", "a")
         f.write(LOG_FIRST_ROW + '\n')
     f = open("output/log.csv", "a")
-    row = img_name + ','
+    row = img_name + IMG_OUTPUT_EXTENSION + ','
     for k in keypoints:
         if k is None:
             row += "None,"
         else:
             row += '(' + ' '.join(map(str, k)) + '),'
     row += ','.join(map(str, distances_and_angles)) + '\n'
-    
+
     f.write(str(row))
 
 
-def save_img(frame):
-    current_time = time.strftime(
-        '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
-    img_extension = ".jpg"
+def save_img(frame, is_with_points, name=None):
+    if name is None:
+        name = time.strftime(
+            '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
 
     if not os.path.exists("output"):
         os.mkdir('output')
 
-    save_path = os.path.join("output", current_time + img_extension)
+    # if it is an image with points and lines drawn on
+    if is_with_points:
+        save_path = os.path.join("output", name + IMG_OUTPUT_EXTENSION)
+    else:
+        save_path = os.path.join("output", name + "_b" + IMG_OUTPUT_EXTENSION)
+
     cv2.imwrite(save_path, frame)
-    return current_time + img_extension
+    return name
 
 
 def main():
