@@ -18,10 +18,10 @@ COCO Output Format:
 '''
 
 '''
-* lsh = left shoulder
-* rsh = right shoulder
-* reye = right eye
-* leye = left eye
+* LSH = left shoulder
+* RSH = right shoulder
+* REye = right eye
+* LEye = left eye
 '''
 
 NOSE = 0
@@ -108,14 +108,20 @@ def censor_eyes(frame, left_eye, right_eye):
     :return: None
     """
 
+    if left_eye is None or right_eye is None:
+        print("Error! Couldn't find eyes in the image, so couldn't censor them")
+        return
+
     # calculate the slope intercept form of the line from the Left Eye to the Right eye
     # meaning, finding the m and b, in y=mx+b
 
     m, b = calc_m_and_b(left_eye, right_eye)
     dist = math.dist(left_eye, right_eye)
     enlarged_dist_wanted = dist * 0.4
-    left_point = (int(left_eye[0] + enlarged_dist_wanted), int(m * (left_eye[0] + enlarged_dist_wanted) + b))
-    right_point = (int(right_eye[0] - enlarged_dist_wanted), int(m * (right_eye[0] - enlarged_dist_wanted) + b))
+    left_point = (int(left_eye[0] + enlarged_dist_wanted),
+                  int(m * (left_eye[0] + enlarged_dist_wanted) + b))
+    right_point = (int(right_eye[0] - enlarged_dist_wanted),
+                   int(m * (right_eye[0] - enlarged_dist_wanted) + b))
 
     # slope of the perpendicular line
     per_slope = -1.0 / m
@@ -124,17 +130,21 @@ def censor_eyes(frame, left_eye, right_eye):
     y_margin_wanted = dist / 3
 
     bottom_right_y = left_point[1] + y_margin_wanted
-    bottom_right = (int(x_from_m_b_y(per_slope, b_left, bottom_right_y)), int(bottom_right_y))
+    bottom_right = (
+        int(x_from_m_b_y(per_slope, b_left, bottom_right_y)), int(bottom_right_y))
 
     upper_right_y = left_point[1] - y_margin_wanted
-    upper_right = (int(x_from_m_b_y(per_slope, b_left, upper_right_y)), int(upper_right_y))
+    upper_right = (
+        int(x_from_m_b_y(per_slope, b_left, upper_right_y)), int(upper_right_y))
 
     upper_left_y = right_point[1] - y_margin_wanted
-    upper_left = (int(x_from_m_b_y(per_slope, b_right, upper_left_y)), int(upper_left_y))
+    upper_left = (
+        int(x_from_m_b_y(per_slope, b_right, upper_left_y)), int(upper_left_y))
     # upper_left = (int((upper_left_y - b_right) / per_slope), int(upper_left_y))
 
     bottom_left_y = right_point[1] + y_margin_wanted
-    bottom_left = (int(x_from_m_b_y(per_slope, b_right, bottom_left_y)), int(bottom_left_y))
+    bottom_left = (int(x_from_m_b_y(per_slope, b_right,
+                                    bottom_left_y)), int(bottom_left_y))
 
     # draw the edges of the censoring polygon:
     # cv2.circle(frame, upper_right, 8, (0, 0, 255))
@@ -143,7 +153,8 @@ def censor_eyes(frame, left_eye, right_eye):
     # cv2.circle(frame, bottom_left, 8, (0, 0, 255))
 
     # Censor eyes
-    cv2.fillConvexPoly(frame, array([upper_left, bottom_left, bottom_right, upper_right]), (0, 0, 0))
+    cv2.fillConvexPoly(frame, array(
+        [upper_left, bottom_left, bottom_right, upper_right]), (0, 0, 0))
 
 
 def label_image(net, frame, need_to_show_frame=True):
@@ -213,26 +224,35 @@ def label_image(net, frame, need_to_show_frame=True):
         partB = pair[1]
 
         if points[partA] and points[partB]:
-            # we do all this, to print the nose in pink, the neck in green, and the shoulders in red.
+            # we do all this, to print the nose in pink, the Neck in green, and the shoulders in red.
             # we work with BGR format.
-            cv2.circle(frame, points[partA], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
-            cv2.circle(frame, points[partB], 8, (0, 0, 255), thickness=-1, lineType=cv2.FILLED)
+            cv2.circle(frame, points[partA], 8, (0, 0, 255),
+                       thickness=-1, lineType=cv2.FILLED)
+            cv2.circle(frame, points[partB], 8, (0, 0, 255),
+                       thickness=-1, lineType=cv2.FILLED)
             if 0 == pair[0]:
-                cv2.circle(frame, points[partA], 8, (255, 0, 255), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(
+                    frame, points[partA], 8, (255, 0, 255), thickness=-1, lineType=cv2.FILLED)
             elif 0 == pair[1]:
-                cv2.circle(frame, points[partB], 8, (255, 0, 255), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(
+                    frame, points[partB], 8, (255, 0, 255), thickness=-1, lineType=cv2.FILLED)
             if 1 == pair[0]:
-                cv2.circle(frame, points[partA], 8, (0, 255, 0), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(frame, points[partA], 8, (0, 255, 0),
+                           thickness=-1, lineType=cv2.FILLED)
             elif 1 == pair[1]:
-                cv2.circle(frame, points[partB], 8, (0, 255, 0), thickness=-1, lineType=cv2.FILLED)
+                cv2.circle(frame, points[partB], 8, (0, 255, 0),
+                           thickness=-1, lineType=cv2.FILLED)
 
             # we draw the connecting line
-            cv2.line(frame, points[partA], points[partB], (0, 255, 255), 3, lineType=cv2.LINE_AA)
+            cv2.line(frame, points[partA], points[partB],
+                     (0, 255, 255), 3, lineType=cv2.LINE_AA)
 
     if need_to_show_frame:
         cv2.imshow('Output-Skeleton', frame)
 
-    save_img(frame)
+    img_name = save_img(frame)
+    keypoints, distances_and_angles = calc_data_for_log(points)
+    save_to_log(img_name, keypoints, distances_and_angles)
 
     print("Captured Image!")
     print("Total time taken : {:.3f}".format(time.time() - t))
@@ -240,14 +260,72 @@ def label_image(net, frame, need_to_show_frame=True):
     cv2.waitKey(0)
 
 
+def calc_data_for_log(points):
+    # only the points we care about
+    keypoints = [points[i] for i in range(len(points)) if i in [NOSE, NECK, RSH, LSH, REYE, LEYE]]
+    distances_wanted = [(NOSE, NECK), (NECK, RSH), (NECK, LSH), (RSH, LSH), (NOSE, RSH), (NOSE, LSH)]
+    angles_wanted = [(NOSE, NECK, RSH), (LSH, NECK, NOSE)]
+
+    distances = []
+    angles = []
+
+    for pair in distances_wanted:
+        # if both in pair were detected, we add the distance between them. else, we add None
+        if points[pair[0]] is not None and points[pair[1]] is not None:
+            distances.append(math.dist(points[pair[0]], points[pair[1]]))
+        else:
+            distances.append(None)
+    for triplets in angles_wanted:
+        # if all were detected, we add the angle between them. else, we add None
+        if points[triplets[0]] is not None and points[triplets[1]] is not None and points[triplets[2]] is not None:
+            angles.append(calc_angle(points[triplets[0]], points[triplets[1]], points[triplets[2]]))
+        else:
+            angles.append(None)
+
+    return keypoints, distances + angles
+
+
+def save_to_log(img_name, keypoints, distances_and_angles):
+    """
+    save data to log file
+    :param img_name: image name
+    :param keypoints: keypoints detected
+    :param distances_and_angles: distances and angles calculated
+    :return: None
+    """
+    LOG_FIRST_ROW = "File name,Nose,Neck,Right Shoulder,Left Shoulder,Right Eye,Left Eye," \
+                    "Nose <-> Neck,Neck <-> RSH,Neck <-> LSH,RSH <-> LSH,Nose <-> RSH,Nose <-> LSH" \
+                    "(Nose <-> Neck <-> RSH),(LSH <-> Neck <-> Nose)"
+
+    try:
+        open("output/log.csv")
+    except IOError:
+        # if file doesn't exist, we create one
+        f = open("output/log.csv", "a")
+        f.write(LOG_FIRST_ROW + '\n')
+    f = open("output/log.csv", "a")
+    row = img_name + ','
+    for k in keypoints:
+        if k is None:
+            row += "None,"
+        else:
+            row += '(' + ' '.join(map(str, k)) + '),'
+    row += ','.join(map(str, distances_and_angles)) + '\n'
+    print("row:", row)
+    f.write(str(row))
+
+
 def save_img(frame):
-    current_time = time.strftime('%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
+    current_time = time.strftime(
+        '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
+    img_extension = ".jpg"
 
     if not os.path.exists("output"):
         os.mkdir('output')
 
-    save_path = os.path.join("output", current_time + ".jpg")
+    save_path = os.path.join("output", current_time + img_extension)
     cv2.imwrite(save_path, frame)
+    return current_time + img_extension
 
 
 def main():
