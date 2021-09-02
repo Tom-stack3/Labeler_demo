@@ -136,11 +136,11 @@ def censor_eyes(frame, left_eye, right_eye):
     bottom_left_y = right_point[1] + y_margin_wanted
     bottom_left = (int(x_from_m_b_y(per_slope, b_right, bottom_left_y)), int(bottom_left_y))
 
-    cv2.circle(frame, upper_right, 8, (0, 0, 255))
-    cv2.circle(frame, bottom_right, 8, (0, 0, 255))
-
-    cv2.circle(frame, upper_left, 8, (0, 0, 255))
-    cv2.circle(frame, bottom_left, 8, (0, 0, 255))
+    # draw the edges of the censoring polygon:
+    # cv2.circle(frame, upper_right, 8, (0, 0, 255))
+    # cv2.circle(frame, bottom_right, 8, (0, 0, 255))
+    # cv2.circle(frame, upper_left, 8, (0, 0, 255))
+    # cv2.circle(frame, bottom_left, 8, (0, 0, 255))
 
     # Censor eyes
     cv2.fillConvexPoly(frame, array([upper_left, bottom_left, bottom_right, upper_right]), (0, 0, 0))
