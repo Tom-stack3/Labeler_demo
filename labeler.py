@@ -260,9 +260,9 @@ def label_image(net, frame, need_to_show_frame=True):
     keypoints, distances_and_angles = calc_data_for_log(points)
     save_to_log(img_name, keypoints, distances_and_angles)
 
-    print("Captured Image!")
+    print("Saved Image!")
     print("Total time taken : {:.3f}".format(time.time() - t))
-
+    print()
     cv2.waitKey(0)
 
 
@@ -317,7 +317,7 @@ def save_to_log(img_name, keypoints, distances_and_angles):
         else:
             row += '(' + ' '.join(map(str, k)) + '),'
     row += ','.join(map(str, distances_and_angles)) + '\n'
-    print("row:", row)
+    
     f.write(str(row))
 
 
