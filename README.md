@@ -13,3 +13,13 @@ python labeler.py
   ```shell
   python -m pip install -r requirements.txt
   ```
+
+## Output
+All the labeled images and a log file are saved locally in the `output` folder, which will be created automatically.
+In order to protect the user's privacy, the person's eyes detected in a captured image are censored, before the image is saved locally.
+
+An example for an image generated and saved locally by the script:
+
+<img src="https://user-images.githubusercontent.com/76645845/131883453-54ada672-ac1e-4da4-9ea9-47ae5e9dc893.jpg" height="265">
+
+<sup>*The example was generated from [this](http://cdn9.dissolve.com/p/D18_240_012/D18_240_012_0004_600.jpg) image.*</sup>
