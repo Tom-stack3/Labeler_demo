@@ -1,5 +1,5 @@
 # Labeler demo
-## Running instructions
+## Installing and Running
 ```shell
 git lfs install
 git clone https://github.com/Tom-stack3/Labeler_demo.git
