@@ -9,6 +9,11 @@ from numpy import ones, vstack, array
 from numpy.linalg import lstsq
 
 CENSOR_EYES = True
+RESIZE_FRAME = False
+
+# Camera Settings
+CAMERA_WIDTH = 640  # 320 # 480 # 640 # 1024 # 1280
+CAMERA_HEIGHT = 480 # 240 # 320 # 480 # 780  # 960
 
 '''
 COCO Output Format:
@@ -163,17 +168,18 @@ def label_image(net, frame, need_to_show_frame=True):
                   [NOSE, LEYE]]  # , [REAR, REYE], [LEYE, LEAR]]
 
     print('Original Dimensions : ', frame.shape)
+    
+    if RESIZE_FRAME:
+        scale_percent = 60  # percent of original size
+        width = int(frame.shape[1] * scale_percent / 100)
+        height = int(frame.shape[0] * scale_percent / 100)
+        dim = (width, height)
 
-    scale_percent = 60  # percent of original size
-    width = int(frame.shape[1] * scale_percent / 100)
-    height = int(frame.shape[0] * scale_percent / 100)
-    dim = (width, height)
+        # resize image
+        resized = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
-    # resize image
-    resized = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
-
-    print('Resized Dimensions : ', resized.shape)
-    frame = resized
+        print('Resized Dimensions : ', resized.shape)
+        frame = resized
 
     frameWidth = frame.shape[1]
     frameHeight = frame.shape[0]
@@ -336,9 +342,7 @@ def main():
     net.setPreferableBackend(cv2.dnn.DNN_TARGET_CPU)
 
     # Camera Settings
-    camera_width = 1024  # 320 # 480 # 640 # 1024 # 1280
-    camera_height = 780  # 240 # 320 # 480 # 780  # 960
-    frameSize = (camera_width, camera_height)
+    frameSize = (CAMERA_WIDTH, CAMERA_HEIGHT)
     video_capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     time.sleep(1.0)
 
