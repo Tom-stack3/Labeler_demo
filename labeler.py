@@ -5,8 +5,7 @@ import math
 import PySimpleGUI as sg
 
 # calculations for eye censoring
-from numpy import ones, vstack, array
-from numpy.linalg import lstsq
+import numpy as np
 
 # for the depth module MiDaS
 import torch
@@ -84,9 +83,9 @@ def calc_m_and_b(point1, point2):
     """
     points = [point1, point2]
     x_coords, y_coords = zip(*points)
-    A = vstack([x_coords, ones(len(x_coords))]).T
+    A = np.vstack([x_coords, np.ones(len(x_coords))]).T
 
-    return lstsq(A, y_coords, rcond=None)[0]
+    return np.linalg.lstsq(A, y_coords, rcond=None)[0]
 
 
 def y_from_m_b_x(m, b, x):
@@ -165,7 +164,7 @@ def censor_eyes(frame, left_eye, right_eye):
     # cv2.circle(frame, bottom_left, 8, (0, 0, 255))
 
     # Censor eyes
-    cv2.fillConvexPoly(frame, array(
+    cv2.fillConvexPoly(frame, np.array(
         [upper_left, bottom_left, bottom_right, upper_right]), (0, 0, 0))
 
 
