@@ -391,7 +391,7 @@ def save_to_log(img_name, keypoints, distances_and_angles):
 def save_img(frame, type: str, name=None):
     if name is None:
         name = time.strftime(
-            MODEL_TYPE+' ' + '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
+            '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
 
     if not os.path.exists("output"):
         os.mkdir('output')
