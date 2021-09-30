@@ -178,7 +178,7 @@ def label_image(net, frame, need_to_show_frame=True):
         height = int(frame.shape[0] * scale_percent / 100)
         dim = (width, height)
 
-        # resize image
+        # Resize image
         resized = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
         print('Resized Dimensions : ', resized.shape)
@@ -207,7 +207,7 @@ def label_image(net, frame, need_to_show_frame=True):
     points = []
 
     for i in range(nPoints):
-        # confidence map of corresponding body's part.
+        # Confidence map of corresponding body's part.
         probMap = output[0, i, :, :]
 
         # Find global maxima of the probMap.
@@ -273,7 +273,7 @@ def label_image(net, frame, need_to_show_frame=True):
 
 
 def calc_data_for_log(points):
-    # only the points we care about
+    # Only the points we care about
     keypoints = [points[i] for i in range(len(points)) if i in [NOSE, NECK, RSH, LSH, REYE, LEYE]]
     distances_wanted = [(NOSE, NECK), (NECK, RSH), (NECK, LSH), (RSH, LSH), (NOSE, RSH), (NOSE, LSH)]
     angles_wanted = [(NOSE, NECK, RSH), (LSH, NECK, NOSE)]
@@ -282,13 +282,13 @@ def calc_data_for_log(points):
     angles = []
 
     for pair in distances_wanted:
-        # if both in pair were detected, we add the distance between them. else, we add None
+        # If both in pair were detected, we add the distance between them. else, we add None
         if points[pair[0]] is not None and points[pair[1]] is not None:
             distances.append(math.dist(points[pair[0]], points[pair[1]]))
         else:
             distances.append(None)
     for triplets in angles_wanted:
-        # if all were detected, we add the angle between them. else, we add None
+        # If all were detected, we add the angle between them. else, we add None
         if points[triplets[0]] is not None and points[triplets[1]] is not None and points[triplets[2]] is not None:
             angles.append(calc_angle(points[triplets[0]], points[triplets[1]], points[triplets[2]]))
         else:
@@ -312,7 +312,7 @@ def save_to_log(img_name, keypoints, distances_and_angles):
     try:
         open("output/log.csv")
     except IOError:
-        # if file doesn't exist, we create one
+        # If file doesn't exist, we create one
         f = open("output/log.csv", "a")
         f.write(LOG_FIRST_ROW + '\n')
     f = open("output/log.csv", "a")
@@ -335,7 +335,7 @@ def save_img(frame, is_with_points, name=None):
     if not os.path.exists("output"):
         os.mkdir('output')
 
-    # if it is an image with points and lines drawn on
+    # If it is an image with points and lines drawn on
     if is_with_points:
         save_path = os.path.join("output", name + IMG_OUTPUT_EXTENSION)
     else:
@@ -357,7 +357,7 @@ def main():
     video_capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     time.sleep(1.0)
 
-    # init Windows Manager
+    # Init Windows Manager
     sg.theme("DarkBlue")
 
     # Capture button logo
@@ -367,7 +367,7 @@ def main():
                             image_filename=img_path, image_size=(50, 50), image_subsample=2,
                             border_width=0, key="_capture_")
 
-    # def webcam col
+    # Def webcam col
     colwebcam1_layout = [[sg.Text("Camera View", size=(60, 1), justification="center")],
                          [sg.Image(filename="", key="cam1")], [capture_btn]]
     colwebcam1 = sg.Column(colwebcam1_layout, element_justification='center')
@@ -386,15 +386,18 @@ def main():
         if event == sg.WIN_CLOSED:
             break
 
-        # get camera frame
+        # Get camera frame
         ret, frameOrig = video_capture.read()
         frame = cv2.resize(frameOrig, frameSize)
 
-        # update webcam
+        # If you want to procces an image not from the camera
+        # frame = cv2.imread("path_to_image")
+
+        # Update webcam
         imgbytes = cv2.imencode(".png", frame)[1].tobytes()
         window["cam1"].update(data=imgbytes)
 
-        # if the capture button was pressed
+        # If the capture button was pressed
         if event == "_capture_":
             label_image(net, frame, False)
 
