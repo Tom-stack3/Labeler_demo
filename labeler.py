@@ -8,6 +8,10 @@ import PySimpleGUI as sg
 from numpy import ones, vstack, array
 from numpy.linalg import lstsq
 
+# for the depth module MiDaS
+import torch
+import matplotlib.pyplot as plt
+
 CENSOR_EYES = True
 RESIZE_FRAME = False
 
@@ -165,7 +169,55 @@ def censor_eyes(frame, left_eye, right_eye):
         [upper_left, bottom_left, bottom_right, upper_right]), (0, 0, 0))
 
 
-def label_image(net, frame, need_to_show_frame=True):
+MODEL_TYPE = "d"
+
+
+class depthAnalyzer:
+    def __init__(self) -> None:
+        # 5 seconds in average
+        # self.model_type = "DPT_Large" # MiDaS v3 - Large     (highest accuracy, slowest inference speed)
+        # 2.4 seconds in average
+        # MiDaS v3 - Hybrid    (medium accuracy, medium inference speed)
+        self.model_type = "DPT_Hybrid"
+        # 0.8 seconds in average
+        # self.model_type = "MiDaS_small"  # MiDaS v2.1 - Small   (lowest accuracy, highest inference speed)
+
+        global MODEL_TYPE
+        MODEL_TYPE = self.model_type
+
+        self.midas = torch.hub.load("intel-isl/MiDaS", self.model_type)
+        self.device = torch.device(
+            "cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.midas.to(self.device)
+        self.midas.eval()
+        midas_transforms = torch.hub.load("intel-isl/MiDaS", "transforms")
+
+        if self.model_type == "DPT_Large" or self.model_type == "DPT_Hybrid":
+            self.transform = midas_transforms.dpt_transform
+        else:
+            self.transform = midas_transforms.small_transform
+
+    def calc_depth(self, frame, img_name):
+        input_batch = self.transform(frame).to(self.device)
+
+        # Predict and resize to original resolution
+        with torch.no_grad():
+            prediction = self.midas(input_batch)
+
+            prediction = torch.nn.functional.interpolate(
+                prediction.unsqueeze(1),
+                size=frame.shape[:2],
+                mode="bicubic",
+                align_corners=True,
+            ).squeeze()
+
+        output = prediction.cpu().numpy()
+
+        # Show and save result
+        save_img(output, "DEPTH", img_name)
+
+
+def label_image(net, frame, dpa: depthAnalyzer, need_to_show_frame=True):
     nPoints = 18
     POSE_PAIRS = [[NOSE, NECK], [NECK, RSH], [NECK, LSH], [NOSE, RSH], [NOSE, LSH], [RSH, LSH], [REYE, NOSE],
                   [NOSE, LEYE]]  # , [REAR, REYE], [LEYE, LEAR]]
@@ -223,12 +275,19 @@ def label_image(net, frame, need_to_show_frame=True):
         else:
             points.append(None)
 
+    original_frame = frame
+
     if CENSOR_EYES:
         # Censor the eyes
         censor_eyes(frame, points[LEYE], points[REYE])
 
     # Save image without the points and lines detected drawn on.
-    img_name = save_img(frame, False)
+    img_name = save_img(frame, "EMPTY")
+
+    # Calc depth
+    dt = time.time()
+    dpa.calc_depth(original_frame, img_name)
+    print("time taken by depth module : {:.3f}".format(time.time() - dt))
 
     # Draw Skeleton
     for pair in POSE_PAIRS:
@@ -262,7 +321,8 @@ def label_image(net, frame, need_to_show_frame=True):
     if need_to_show_frame:
         cv2.imshow('Output-Skeleton', frame)
 
-    save_img(frame, True, img_name)
+    save_img(frame, "DRAWN", img_name)
+
     keypoints, distances_and_angles = calc_data_for_log(points)
     save_to_log(img_name, keypoints, distances_and_angles)
 
@@ -274,8 +334,10 @@ def label_image(net, frame, need_to_show_frame=True):
 
 def calc_data_for_log(points):
     # Only the points we care about
-    keypoints = [points[i] for i in range(len(points)) if i in [NOSE, NECK, RSH, LSH, REYE, LEYE]]
-    distances_wanted = [(NOSE, NECK), (NECK, RSH), (NECK, LSH), (RSH, LSH), (NOSE, RSH), (NOSE, LSH)]
+    keypoints = [points[i] for i in range(len(points)) if i in [
+        NOSE, NECK, RSH, LSH, REYE, LEYE]]
+    distances_wanted = [(NOSE, NECK), (NECK, RSH), (NECK, LSH),
+                        (RSH, LSH), (NOSE, RSH), (NOSE, LSH)]
     angles_wanted = [(NOSE, NECK, RSH), (LSH, NECK, NOSE)]
 
     distances = []
@@ -290,7 +352,8 @@ def calc_data_for_log(points):
     for triplets in angles_wanted:
         # If all were detected, we add the angle between them. else, we add None
         if points[triplets[0]] is not None and points[triplets[1]] is not None and points[triplets[2]] is not None:
-            angles.append(calc_angle(points[triplets[0]], points[triplets[1]], points[triplets[2]]))
+            angles.append(calc_angle(
+                points[triplets[0]], points[triplets[1]], points[triplets[2]]))
         else:
             angles.append(None)
 
@@ -327,21 +390,27 @@ def save_to_log(img_name, keypoints, distances_and_angles):
     f.write(str(row))
 
 
-def save_img(frame, is_with_points, name=None):
+def save_img(frame, type: str, name=None):
     if name is None:
         name = time.strftime(
-            '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
+            MODEL_TYPE+' ' + '%Y_%m_%d %H_%M_%S', time.localtime(time.time()))
 
     if not os.path.exists("output"):
         os.mkdir('output')
 
     # If it is an image with points and lines drawn on
-    if is_with_points:
+    if type == "DRAWN":
         save_path = os.path.join("output", name + IMG_OUTPUT_EXTENSION)
+    elif type == "DEPTH":
+        save_path = os.path.join(
+            "output", name + "_depth" + IMG_OUTPUT_EXTENSION)
     else:
         save_path = os.path.join("output", name + "_b" + IMG_OUTPUT_EXTENSION)
 
-    cv2.imwrite(save_path, frame)
+    if type == "DEPTH":
+        plt.imsave(save_path, frame)
+    else:
+        cv2.imwrite(save_path, frame)
     return name
 
 
@@ -351,6 +420,8 @@ def main():
     weightsFile = "coco/pose_iter_440000.caffemodel"
     net = cv2.dnn.readNetFromCaffe(protoFile, weightsFile)
     net.setPreferableBackend(cv2.dnn.DNN_TARGET_CPU)
+
+    dpa = depthAnalyzer()
 
     # Camera Settings
     frameSize = (CAMERA_WIDTH, CAMERA_HEIGHT)
@@ -399,7 +470,7 @@ def main():
 
         # If the capture button was pressed
         if event == "_capture_":
-            label_image(net, frame, False)
+            label_image(net, frame, dpa, False)
 
     video_capture.release()
     cv2.destroyAllWindows()
