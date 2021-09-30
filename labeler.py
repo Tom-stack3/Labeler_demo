@@ -197,7 +197,7 @@ class depthAnalyzer:
         else:
             self.transform = midas_transforms.small_transform
 
-    def calc_depth(self, frame, img_name):
+    def calc_depth(self, frame, img_name=None):
         input_batch = self.transform(frame).to(self.device)
 
         # Predict and resize to original resolution
@@ -214,7 +214,7 @@ class depthAnalyzer:
         output = prediction.cpu().numpy()
 
         # Show and save result
-        save_img(output, "DEPTH", img_name)
+        return save_img(output, "DEPTH", img_name)
 
 
 def label_image(net, frame, dpa: depthAnalyzer, need_to_show_frame=True):
@@ -275,19 +275,17 @@ def label_image(net, frame, dpa: depthAnalyzer, need_to_show_frame=True):
         else:
             points.append(None)
 
-    original_frame = frame
+    # Calculate depth
+    dt = time.time()
+    img_name = dpa.calc_depth(frame)
+    print("time taken by depth module : {:.3f}".format(time.time() - dt))
 
     if CENSOR_EYES:
         # Censor the eyes
         censor_eyes(frame, points[LEYE], points[REYE])
 
     # Save image without the points and lines detected drawn on.
-    img_name = save_img(frame, "EMPTY")
-
-    # Calc depth
-    dt = time.time()
-    dpa.calc_depth(original_frame, img_name)
-    print("time taken by depth module : {:.3f}".format(time.time() - dt))
+    save_img(frame, "EMPTY", img_name)
 
     # Draw Skeleton
     for pair in POSE_PAIRS:
@@ -462,7 +460,7 @@ def main():
         frame = cv2.resize(frameOrig, frameSize)
 
         # If you want to procces an image not from the camera
-        # frame = cv2.imread("path_to_image")
+        # frame = cv2.imread("PATH_TO_IMAGE")
 
         # Update webcam
         imgbytes = cv2.imencode(".png", frame)[1].tobytes()
