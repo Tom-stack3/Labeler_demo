@@ -29,6 +29,6 @@ An example for three images generated from a camera capture, which are then save
 ## Performance
 Between capture to capture, the frame freezes, meaning the script is proccessing the image in the background. It usually takes less than 4 second in total to proccess the image, but it depends on your device. Usually the most time-consuming part is the depth analyzer.
 
-## Acknowledgement
+## Acknowledgements
 - The point detection uses a 2D Pose Estimation model, published in this [paper](https://arxiv.org/pdf/1611.08050.pdf).
 - The depth analysis uses the [MiDaS](https://github.com/isl-org/MiDaS) model.
