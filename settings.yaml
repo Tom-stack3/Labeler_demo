@@ -1,0 +1,29 @@
+--- # Camera Settings
+camera:
+  width:  640
+  height: 480
+
+# Output Settings
+output:
+  output_extension: ".jpg"
+  censor_eyes:  True
+  resize_frame: False
+
+# Depth Model Settings
+depth_model:
+  model_type: "DPT_Hybrid"
+  # There are three current model types: 'DPT_Large', 'DPT_Hybrid' and 'MiDaS_small'.
+  # 'DPT_Large': MiDaS v3 - Large     (highest accuracy, slowest inference speed)
+  # 'DPT_Hybrid': MiDaS v3 - Hybrid   (medium accuracy, medium inference speed)
+  # 'MiDaS_small': MiDaS v2.1 - Small (lowest accuracy, highest inference speed)
+  prediction_mode: "bicubic"
+
+# 2D-Points Model Settings
+2D_model:
+  proto_file:   "coco/pose_deploy_linevec.prototxt"
+  weights_file: "coco/pose_iter_440000.caffemodel"
+
+# Window settings
+window:
+  button_img_path:  "img/camera.png"
+  sg_theme: "DarkBlue"
