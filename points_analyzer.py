@@ -34,7 +34,7 @@ class PointsAnalyzer:
     def __init__(self, logger) -> None:
         # Load model settings from yaml
         with open('settings.yaml', 'r') as input_file:
-            self.settings = yaml.load(input_file)["2D_model"]
+            self.settings = yaml.load(input_file, yaml.FullLoader)["2D_model"]
 
         # Save the logger
         self.logger = logger
@@ -56,6 +56,7 @@ class PointsAnalyzer:
         # save the frame
         self.frame = frame
         self.img_name = img_name
+        self.points_detected = []
 
         frameWidth = frame.shape[1]
         frameHeight = frame.shape[0]
@@ -63,7 +64,7 @@ class PointsAnalyzer:
 
         t = time.time()
 
-        # input image dimensions for the network
+        # Input image dimensions for the network
         inWidth = 368
         inHeight = 368
         inpBlob = cv2.dnn.blobFromImage(frame, 1.0 / 255, (inWidth, inHeight),
@@ -157,7 +158,7 @@ class PointsAnalyzer:
         return keypoints, distances + angles
 
     def log_img_info(self) -> None:
-        keypoints, distances_and_angles = PointsAnalyzer.calc_data_for_log(self.points)
+        keypoints, distances_and_angles = PointsAnalyzer.__calc_data_for_log(self.points_detected)
         self.logger.save_to_log(self.img_name, keypoints, distances_and_angles)
 
     def censor_eyes(self) -> None:
@@ -195,7 +196,7 @@ class PointsAnalyzer:
 
         bottom_right_y = left_point[1] + y_margin_wanted
         bottom_right = (
-            int(utils.math.utils.math.x_from_m_b_y(per_slope, b_left, bottom_right_y)), int(bottom_right_y))
+            int(utils.math.x_from_m_b_y(per_slope, b_left, bottom_right_y)), int(bottom_right_y))
 
         upper_right_y = left_point[1] - y_margin_wanted
         upper_right = (

@@ -11,6 +11,8 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
+from labeler import Labeler
+
 CENSOR_EYES = True
 RESIZE_FRAME = False
 
@@ -412,13 +414,7 @@ def save_img(frame, type: str, name=None):
 
 
 def main():
-    # Load the Model
-    protoFile = "coco/pose_deploy_linevec.prototxt"
-    weightsFile = "coco/pose_iter_440000.caffemodel"
-    net = cv2.dnn.readNetFromCaffe(protoFile, weightsFile)
-    net.setPreferableBackend(cv2.dnn.DNN_TARGET_CPU)
-
-    dpa = depthAnalyzer()
+    labeler = Labeler()
 
     # Camera Settings
     frameSize = (CAMERA_WIDTH, CAMERA_HEIGHT)
@@ -467,7 +463,8 @@ def main():
 
         # If the capture button was pressed
         if event == "_capture_":
-            label_image(net, frame, dpa, False)
+            # label_image(net, frame, dpa, False)
+            labeler.label_image(frame)
 
     video_capture.release()
     cv2.destroyAllWindows()

@@ -10,7 +10,7 @@ import cv2
 class Labeler:
     def __init__(self) -> None:
         with open('settings.yaml', 'r') as input_file:
-            self.settings = yaml.load(input_file)
+            self.settings = yaml.load(input_file, yaml.FullLoader)
 
         self.logger = Logger(self.settings["output"]["output_extension"])
         self.depth_analyzer = DepthAnalyzer(self.logger)
@@ -27,13 +27,14 @@ class Labeler:
         
         img_name = Labeler.generate_img_name()
 
+        # Calculate and save the depths of the image
+        self.depth_analyzer.calc_depth(frame, img_name)
+
         self.poinys_analyzer.analyze_image(frame, img_name)
         # Censor the eyes of the person in the image
         self.poinys_analyzer.censor_eyes()
         # Save the image with only censored eyes
         self.poinys_analyzer.save_img("EMPTY")
-        
-        self.depth_analyzer.calc_depth(frame, img_name)
 
         # Detect and draw points on frame
         self.poinys_analyzer.draw_points()

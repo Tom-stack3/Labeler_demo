@@ -7,7 +7,7 @@ class DepthAnalyzer:
     def __init__(self, logger) -> None:
         # Load model settings from yaml
         with open('settings.yaml', 'r') as input_file:
-            self.settings = yaml.load(input_file)["depth_model"]
+            self.settings = yaml.load(input_file, yaml.FullLoader)["depth_model"]
         self.model_type = self.settings["model_type"]
 
         # Save the logger
