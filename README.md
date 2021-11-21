@@ -8,7 +8,14 @@ pip install -r requirements.txt
 python app.py
 ```
 - Make sure you have a working camera connected to your device.
-- If the command `pip install -r requirements.txt` isn't working and the shell prints: `'pip' is not recognized..`, use instead:
+- If the following command doesn't work:
+  ```shell
+  $ pip install -r requirements.txt
+  
+  'pip' is not recognized..
+  ```
+  
+  Then use instead:
   ```shell
   python -m pip install -r requirements.txt
   ```
