@@ -1,5 +1,6 @@
 from cv2 import resize
 from depth_analyzer import DepthAnalyzer
+from points_analyzer import PointsAnalyzer
 from utils.logger import Logger
 
 import yaml
@@ -13,17 +14,35 @@ class Labeler:
 
         self.logger = Logger(self.settings["output"]["output_extension"])
         self.depth_analyzer = DepthAnalyzer(self.logger)
+        self.poinys_analyzer = PointsAnalyzer(self.logger)
     
     def label_image(self, frame):
+
+        print(f'Original Dimensions: {frame.shape}')
+
         # If needed to resize the frame
         if self.settings["output"]["resize_frame"]:
             Labeler.resize_frame(frame)
+            print(f'Resized Dimensions: {frame.shape}')
         
         img_name = Labeler.generate_img_name()
 
-        # If needed to censor eyes. True by default
-        if self.settings["output"]["censor_eyes"]:
-            pass
+        self.poinys_analyzer.analyze_image(frame, img_name)
+        # Censor the eyes of the person in the image
+        self.poinys_analyzer.censor_eyes()
+        # Save the image with only censored eyes
+        self.poinys_analyzer.save_img("EMPTY")
+        
+        self.depth_analyzer.calc_depth(frame, img_name)
+
+        # Detect and draw points on frame
+        self.poinys_analyzer.draw_points()
+        # Save the image with points drawn on
+        self.poinys_analyzer.save_img("DRAWN")
+
+        # Save points and data to log
+        self.poinys_analyzer.log_img_info()
+        
 
     def resize_frame(frame):
         scale_percent = 60  # percent of original size
