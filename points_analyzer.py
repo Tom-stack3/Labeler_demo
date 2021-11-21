@@ -4,7 +4,6 @@ import cv2
 import utils.math
 import math
 import numpy as np
-import time
 
 '''
 COCO Output Format:
@@ -62,8 +61,6 @@ class PointsAnalyzer:
         frameHeight = frame.shape[0]
         threshold = 0.1
 
-        t = time.time()
-
         # Input image dimensions for the network
         inWidth = 368
         inHeight = 368
@@ -73,7 +70,6 @@ class PointsAnalyzer:
         self.net.setInput(inpBlob)
 
         output = self.net.forward()
-        print("time taken by network : {:.3f}".format(time.time() - t))
 
         H = output.shape[2]
         W = output.shape[3]

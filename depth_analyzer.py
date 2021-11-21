@@ -1,6 +1,10 @@
 # for the depth module MiDaS
 import torch
 import yaml
+import warnings
+
+# Ignore PyTorch UserWarning
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class DepthAnalyzer:
@@ -40,8 +44,8 @@ class DepthAnalyzer:
             prediction = torch.nn.functional.interpolate(
                 prediction.unsqueeze(1),
                 size=frame.shape[:2],
-                mode=self.settings["prediction_mode"],
                 align_corners=True,
+                mode=self.settings["prediction_mode"],
             ).squeeze()
 
         output = prediction.cpu().numpy()

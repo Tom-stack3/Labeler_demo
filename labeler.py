@@ -1,4 +1,3 @@
-from cv2 import resize
 from depth_analyzer import DepthAnalyzer
 from points_analyzer import PointsAnalyzer
 from utils.logger import Logger
