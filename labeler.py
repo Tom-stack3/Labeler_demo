@@ -7,6 +7,7 @@ import yaml
 import time
 import cv2
 
+
 class Labeler:
     def __init__(self) -> None:
         with open('settings.yaml', 'r') as input_file:
@@ -15,7 +16,7 @@ class Labeler:
         self.logger = Logger(self.settings["output"]["output_extension"])
         self.depth_analyzer = DepthAnalyzer(self.logger)
         self.poinys_analyzer = PointsAnalyzer(self.logger)
-    
+
     def label_image(self, frame):
 
         print(f'Original Dimensions: {frame.shape}')
@@ -24,7 +25,7 @@ class Labeler:
         if self.settings["output"]["resize_frame"]:
             Labeler.resize_frame(frame)
             print(f'Resized Dimensions: {frame.shape}')
-        
+
         img_name = Labeler.generate_img_name()
 
         # Calculate and save the depths of the image
@@ -43,7 +44,6 @@ class Labeler:
 
         # Save points and data to log
         self.poinys_analyzer.log_img_info()
-        
 
     def resize_frame(frame):
         scale_percent = 60  # percent of original size

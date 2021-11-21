@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+
 def calc_angle(a, b, c):
     """
     :param a: a[x, y]
@@ -14,7 +15,6 @@ def calc_angle(a, b, c):
     ang = math.degrees(
         math.atan2(a[1] - b[1], a[0] - b[0]) - math.atan2(c[1] - b[1], c[0] - b[0]))
     return ang + 360 if ang < 0 else ang
-
 
 
 def calc_m_and_b(point1, point2):

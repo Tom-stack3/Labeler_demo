@@ -105,9 +105,9 @@ class PointsAnalyzer:
                 # Do all this, to print the nose in pink, the Neck in green, and the shoulders in red.
                 # We work with BGR format.
                 cv2.circle(self.frame, self.points_detected[partA], 8, (0, 0, 255),
-                        thickness=-1, lineType=cv2.FILLED)
+                           thickness=-1, lineType=cv2.FILLED)
                 cv2.circle(self.frame, self.points_detected[partB], 8, (0, 0, 255),
-                        thickness=-1, lineType=cv2.FILLED)
+                           thickness=-1, lineType=cv2.FILLED)
                 if 0 == pair[0]:
                     cv2.circle(
                         self.frame, self.points_detected[partA], 8, (255, 0, 255), thickness=-1, lineType=cv2.FILLED)
@@ -116,15 +116,14 @@ class PointsAnalyzer:
                         self.frame, self.points_detected[partB], 8, (255, 0, 255), thickness=-1, lineType=cv2.FILLED)
                 if 1 == pair[0]:
                     cv2.circle(self.frame, self.points_detected[partA], 8, (0, 255, 0),
-                            thickness=-1, lineType=cv2.FILLED)
+                               thickness=-1, lineType=cv2.FILLED)
                 elif 1 == pair[1]:
                     cv2.circle(self.frame, self.points_detected[partB], 8, (0, 255, 0),
-                            thickness=-1, lineType=cv2.FILLED)
+                               thickness=-1, lineType=cv2.FILLED)
 
                 # Draw the connecting line
                 cv2.line(self.frame, self.points_detected[partA], self.points_detected[partB],
-                        (0, 255, 255), 3, lineType=cv2.LINE_AA)
-
+                         (0, 255, 255), 3, lineType=cv2.LINE_AA)
 
     def save_img(self, type: str):
         self.logger.save_img(self.frame, type, self.img_name)
@@ -158,7 +157,8 @@ class PointsAnalyzer:
         return keypoints, distances + angles
 
     def log_img_info(self) -> None:
-        keypoints, distances_and_angles = PointsAnalyzer.__calc_data_for_log(self.points_detected)
+        keypoints, distances_and_angles = PointsAnalyzer.__calc_data_for_log(
+            self.points_detected)
         self.logger.save_to_log(self.img_name, keypoints, distances_and_angles)
 
     def censor_eyes(self) -> None:

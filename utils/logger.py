@@ -1,13 +1,12 @@
-import time
 import os
 import matplotlib.pyplot as plt
 import cv2
+
 
 class Logger:
     def __init__(self, img_extension) -> None:
         self.img_extension = img_extension
 
-        
     def save_to_log(self, img_name, keypoints, distances_and_angles):
         """
         save data to log file
@@ -26,7 +25,7 @@ class Logger:
             # If file doesn't exist, we create one
             f = open("output/log.csv", "a")
             f.write(LOG_FIRST_ROW + '\n')
-        
+
         f = open("output/log.csv", "a")
         row = img_name + self.img_extension + ','
         for k in keypoints:
@@ -37,7 +36,6 @@ class Logger:
         row += ','.join(map(str, distances_and_angles)) + '\n'
 
         f.write(str(row))
-
 
     def save_img(self, frame, type: str, name: str) -> None:
         if not os.path.exists("output"):
@@ -50,7 +48,8 @@ class Logger:
             save_path = os.path.join(
                 "output", name + "_depth" + self.img_extension)
         else:
-            save_path = os.path.join("output", name + "_b" + self.img_extension)
+            save_path = os.path.join(
+                "output", name + "_b" + self.img_extension)
 
         if type == "DEPTH":
             plt.imsave(save_path, frame)
