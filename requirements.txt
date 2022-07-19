@@ -1,5 +1,5 @@
 opencv-python~=4.5.1.48
 PySimpleGUI~=4.34.0
-numpy~=1.19.5
+numpy>=1.22
 torch~=1.9.1
 matplotlib~=3.3.3
